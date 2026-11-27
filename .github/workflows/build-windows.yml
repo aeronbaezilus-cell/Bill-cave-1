@@ -1,0 +1,45 @@
+name: Build Windows App
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-windows:
+    name: Build Windows installer
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Build web app
+        run: |
+          npm install --legacy-peer-deps
+          npm run build
+
+      - name: Copy web build into desktop app
+        shell: bash
+        run: |
+          mkdir -p desktop/app
+          cp -r dist/* desktop/app/
+
+      - name: Build Windows installer
+        working-directory: desktop
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+        run: |
+          npm install
+          npx electron-builder --win --x64 --publish never
+
+      - name: Upload Windows app
+        uses: actions/upload-artifact@v4
+        with:
+          name: Bills-Cave-Windows
+          path: desktop/release/*.exe
