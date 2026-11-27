@@ -169,6 +169,8 @@ public class MediaPlaybackService extends Service {
                         playing ? "Pause" : "Play", svc(playing ? "pause" : "play")).build())
                 .addAction(new Notification.Action.Builder(
                         Icon.createWithResource(this, android.R.drawable.ic_media_next), "Next", svc("nexttrack")).build())
+                .addAction(new Notification.Action.Builder(
+                        Icon.createWithResource(this, android.R.drawable.ic_menu_close_clear_cancel), "Close", svc("stop")).build())
                 .setStyle(new Notification.MediaStyle()
                         .setMediaSession(session.getSessionToken())
                         .setShowActionsInCompactView(0, 1, 2));

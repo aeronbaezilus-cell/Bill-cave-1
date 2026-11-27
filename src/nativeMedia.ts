@@ -3,6 +3,8 @@
  * lock-screen card and quick-settings player (via window.CaveNative, see CaveMediaBridge.java).
  * Does nothing in a normal browser.
  */
+import { Capacitor, registerPlugin } from '@capacitor/core';
+
 interface CaveNativeApi {
   update(json: string): void;
   clear(): void;
@@ -30,10 +32,13 @@ function loadImage(src: string): Promise<HTMLImageElement> {
   });
 }
 
+const withTimeout = <T,>(p: Promise<T>, ms: number): Promise<T> =>
+  Promise.race([p, new Promise<T>((_, rej) => window.setTimeout(() => rej(new Error('timeout')), ms))]);
+
 async function artToBase64(list: { src: string }[]): Promise<string> {
   for (const a of list) {
     try {
-      const img = await loadImage(a.src);
+      const img = await withTimeout(loadImage(a.src), 2500);
       const size = 512;
       const canvas = document.createElement('canvas');
       canvas.width = size;
@@ -52,8 +57,29 @@ async function artToBase64(list: { src: string }[]): Promise<string> {
   return '';
 }
 
+// Prefer the injected JS interface; fall back to the official Capacitor plugin route.
+function makeNative(): CaveNativeApi | null {
+  if (win.CaveNative) return win.CaveNative;
+  let isNative = false;
+  try {
+    isNative = Capacitor.isNativePlatform();
+  } catch {
+    isNative = false;
+  }
+  if (!isNative) return null;
+  const plugin = registerPlugin<{ update(o: Record<string, unknown>): Promise<void>; clear(): Promise<void> }>('CaveMedia');
+  return {
+    update: (json: string) => {
+      plugin.update(JSON.parse(json)).catch(() => undefined);
+    },
+    clear: () => {
+      plugin.clear().catch(() => undefined);
+    },
+  };
+}
+
 function install() {
-  const native = win.CaveNative;
+  const native = makeNative();
   if (!native || typeof navigator === 'undefined') return;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -26,6 +26,7 @@ public class MainActivity extends BridgeActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        registerPlugin(CaveMediaPlugin.class);
         super.onCreate(savedInstanceState);
         setupMediaBridge();
         requestRuntimePermissionsOnce();
@@ -76,10 +77,6 @@ public class MainActivity extends BridgeActivity {
 
     /* ---------- Runtime permissions: audio, photos/videos, notifications, nearby devices ---------- */
     private void requestRuntimePermissionsOnce() {
-        SharedPreferences sp = getSharedPreferences(PREFS, MODE_PRIVATE);
-        if (sp.getBoolean("runtime_asked", false)) return;
-        sp.edit().putBoolean("runtime_asked", true).apply();
-
         List<String> wanted = new ArrayList<>();
         if (Build.VERSION.SDK_INT >= 33) {
             wanted.add(Manifest.permission.READ_MEDIA_AUDIO);
