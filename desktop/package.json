@@ -1,0 +1,34 @@
+{
+  "name": "bills-cave-desktop",
+  "productName": "Bills Cave",
+  "version": "1.0.0",
+  "description": "Bill's Cave music & audiobook player",
+  "author": "Bill's Cave",
+  "main": "main.cjs",
+  "devDependencies": {
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.billscave.player",
+    "productName": "Bills Cave",
+    "directories": { "output": "release" },
+    "files": ["main.cjs", "app/**/*", "build/icon.png"],
+    "win": {
+      "icon": "build/icon.png",
+      "target": [
+        { "target": "nsis", "arch": ["x64"] },
+        { "target": "portable", "arch": ["x64"] }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "artifactName": "Bills-Cave-Setup-${version}.${ext}"
+    },
+    "portable": {
+      "artifactName": "Bills-Cave-Portable-${version}.${ext}"
+    }
+  }
+}
