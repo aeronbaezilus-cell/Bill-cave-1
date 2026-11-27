@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Adds Musicolet-style permissions and lock-screen flags to the generated AndroidManifest.xml."""
-import re, sys
+import re, sys, os, glob, shutil
 
 path = sys.argv[1]
 s = open(path, encoding='utf-8').read()
@@ -65,6 +65,19 @@ s = re.sub(r'<activity[^>]*\.MainActivity[^>]*>', patch_activity, s, count=1)
 # Allow uncompressed/unrestricted media + legacy storage on old devices
 if 'android:requestLegacyExternalStorage' not in s:
     s = s.replace('<application', '<application android:requestLegacyExternalStorage="true"', 1)
+
+# Native media service (lock-screen / notification controls)
+if 'MediaPlaybackService' not in s:
+    s = s.replace('</application>',
+        '    <service android:name=".MediaPlaybackService" android:exported="false"\n'
+        '             android:foregroundServiceType="mediaPlayback" />\n    </application>', 1)
+
+# Copy every native Java helper next to MainActivity
+here = os.path.dirname(os.path.abspath(__file__))
+dst = os.path.join(os.path.dirname(path), 'java', 'com', 'billscave', 'player')
+os.makedirs(dst, exist_ok=True)
+for f in glob.glob(os.path.join(here, 'java', '*.java')):
+    shutil.copy(f, dst)
 
 open(path, 'w', encoding='utf-8').write(s)
 print('Manifest patched')

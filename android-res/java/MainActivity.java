@@ -12,6 +12,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.PowerManager;
 import android.provider.Settings;
+import android.webkit.WebView;
 
 import com.getcapacitor.BridgeActivity;
 
@@ -26,7 +27,45 @@ public class MainActivity extends BridgeActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setupMediaBridge();
         requestRuntimePermissionsOnce();
+    }
+
+    /* ---------- Native media notification / lock-screen card ---------- */
+    private void setupMediaBridge() {
+        try {
+            final WebView wv = getBridge().getWebView();
+            wv.addJavascriptInterface(new CaveMediaBridge(getApplicationContext()), "CaveNative");
+            MediaPlaybackService.sink = (action, pos) -> runOnUiThread(() ->
+                    wv.evaluateJavascript("window.__caveMediaAction&&window.__caveMediaAction('" + action + "'," + pos + ")", null));
+        } catch (Exception ignored) { }
+    }
+
+    // Keep the web view (and its audio) running when the app is in the background.
+    private void keepWebViewAlive() {
+        try {
+            WebView wv = getBridge().getWebView();
+            wv.onResume();
+            wv.resumeTimers();
+        } catch (Exception ignored) { }
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        keepWebViewAlive();
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        keepWebViewAlive();
+    }
+
+    @Override
+    public void onDestroy() {
+        MediaPlaybackService.sink = null;
+        super.onDestroy();
     }
 
     @Override
